@@ -2,20 +2,30 @@
 
 Low-level, unsafe bindings to the C interface of [glslang](https://github.com/KhronosGroup/glslang), generated with [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
 
-## Motivation
+Motivation
+----------------------------
 [shaderc-rs](https://github.com/google/shaderc-rs) already exists, but it was found not to be straight-forward to build for Android.
 
-## Remarks
+Build target support
+----------------------------
+|            | x86_64-pc-windows-msvc         | aarch64-linux-android    |
+| ---------- | ------------------------------ | -------------------------|
+| Windows    | :heavy_check_mark:             | :heavy_check_mark:       |
+
+Remarks
+----------------------------
 glslang is built with:
  - `ENABLE_OPT=OFF`
  - `ENABLE_SPVREMAPPER=OFF`
  - (Android) `ANDROID_STL=c++_shared`
 
-## Usage
+Usage
+----------------------------
 
 (WIP)
 
-## Building
+Building
+----------------------------
 
 ### glslang
 
