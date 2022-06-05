@@ -1,5 +1,6 @@
 [package]
 name = "glslang-sys-2022"
+authors = ["https://github.com/James2022-rgb"]
 license = "MIT"
 version = "0.1.0"
 edition = "2021"
