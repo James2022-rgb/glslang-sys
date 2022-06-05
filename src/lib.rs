@@ -22,7 +22,7 @@ pub unsafe fn compile(input: &glslang_input_t) -> Result<Vec<u32>, GlslangErrorL
   let program = glslang_program_create();
   glslang_program_add_shader(program, shader);
 
-  // `glslang_program_link` takes `c_int`.
+  // `glslang_program_link` takes `c_int` but `messages` (`glslang_messages_t` being an enum) can be `i32` or `u32` depending on build target.
   #[allow(clippy::useless_conversion)]
   if glslang_program_link(program, input.messages.try_into().unwrap()) == 0 {
     return Err(GlslangErrorLog::from_program("glslang_program_link".to_string(), program));
@@ -86,11 +86,11 @@ impl GlslangErrorLog {
 
 #[cfg(test)]
 mod tests {
-  use std::ffi::{CString, CStr};
+  use std::ffi::CString;
   use super::*;
 
   #[test]
-  fn initialize_process() {
+  fn initialize_and_finalize_process() {
     unsafe {
       glslang_initialize_process();
       glslang_finalize_process();
@@ -101,6 +101,9 @@ mod tests {
   fn compile_vertex_shader() -> Result<(), GlslangErrorLog> {
     unsafe {
       glslang_initialize_process();
+      scopeguard::defer! {
+        glslang_finalize_process();
+      }
 
       let source =
         r##"
@@ -130,38 +133,9 @@ mod tests {
         resource: &DEFAULT_RESOURCE_LIMITS as *const glslang_resource_t,
       };
 
-      let shader = glslang_shader_create(&input);
+      let spirv = compile(&input)?;
+      println!("SPIR-V word count: {}", spirv.len());
 
-      if glslang_shader_preprocess(shader, &input) == 0 {
-        return Err(GlslangErrorLog::from_shader("glslang_shader_preprocess".to_string(), shader));
-      }
-      if glslang_shader_parse(shader, &input) == 0 {
-        return Err(GlslangErrorLog::from_shader("glslang_shader_parse".to_string(), shader));
-      }
-
-      let program = glslang_program_create();
-      glslang_program_add_shader(program, shader);
-
-      if glslang_program_link(program, glslang_messages_t_GLSLANG_MSG_SPV_RULES_BIT | glslang_messages_t_GLSLANG_MSG_VULKAN_RULES_BIT) == 0 {
-        return Err(GlslangErrorLog::from_program("glslang_program_link".to_string(), program));
-      }
-
-      glslang_program_SPIRV_generate(program, input.stage);
-
-      if !glslang_program_SPIRV_get_messages(program).is_null() {
-        let messages_c_str = CStr::from_ptr(glslang_program_SPIRV_get_messages(program));
-        println!("{:?}", messages_c_str);
-      }
-
-      let spirv_size = glslang_program_SPIRV_get_size(program) as usize;
-      let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
-
-      println!("SPIR-V size: {}", spirv_size);
-
-      glslang_program_delete(program);
-      glslang_shader_delete(shader);
-
-      glslang_finalize_process();
       Ok(())
     }
   }
