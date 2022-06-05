@@ -1,6 +1,14 @@
 # Rust FFI bindings for glslang
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Low-level, unsafe bindings to the C interface of [glslang](https://github.com/KhronosGroup/glslang), generated with [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
+
+License
+----------------------------
+See [glslang's license](https://github.com/KhronosGroup/glslang/blob/master/LICENSE.txt).
+
+This crate uses the [MIT license](LICENSE-MIT).
 
 Motivation
 ----------------------------
