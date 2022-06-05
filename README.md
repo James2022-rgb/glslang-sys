@@ -2,13 +2,13 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Low-level, unsafe bindings to the C interface of [glslang](https://github.com/KhronosGroup/glslang), generated with [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
+Low-level, unsafe Rust bindings to the C interface of [glslang](https://github.com/KhronosGroup/glslang), generated with [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
 
 License
 ----------------------------
-See [glslang's license](https://github.com/KhronosGroup/glslang/blob/master/LICENSE.txt).
+Refer to [glslang's LICENSE.txt](https://github.com/KhronosGroup/glslang/blob/master/LICENSE.txt).
 
-This crate uses the [MIT license](LICENSE-MIT).
+This crate is licensed under the [MIT license](LICENSE-MIT).
 
 Motivation
 ----------------------------
@@ -32,6 +32,22 @@ glslang is built with:
 Usage
 ----------------------------
 
+`Cargo.toml`:
+```toml
+[dependencies]
+glslang-sys-2022 = { git = "https://github.com/James2022-rgb/glslang-sys" }
+```
+
+Rust code:
+```rust
+use glslang_sys_2022 as glslang_sys;
+```
+```rust
+unsafe {
+  glslang_sys::glslang_initialize_process();
+}
+```
+
 (WIP)
 
 Building
@@ -50,4 +66,13 @@ The [build script](src/build.rs) attempts to obtain the native glslang library b
 CMake and Python 3.x are required in addition to MSVC or Android NDK.
 Refer to the [relevant section](https://github.com/KhronosGroup/glslang#building-cmake) on glslang's README.md.
 
+Build with feature `build`, e.g.
+```bash
+cargo build --target x86_64-pc-windows-msvc --features build
+```
+
 (WIP)
+
+#### Using the prebuilt binaries
+
+This is the default behavior when nothing is specified.
