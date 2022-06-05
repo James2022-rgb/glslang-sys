@@ -12,13 +12,15 @@ This crate uses the [MIT license](LICENSE-MIT).
 
 Motivation
 ----------------------------
-[shaderc-rs](https://github.com/google/shaderc-rs) already exists, but it was found not to be straight-forward to build for Android.
+- [shaderc-rs](https://github.com/google/shaderc-rs) already exists, but it was found not to be straight-forward to build for Android.
+- [TimNN/glslang-sys](https://github.com/TimNN/glslang-sys) hasn't been maintained since 2015.
 
 Build target support
 ----------------------------
-|            | x86_64-pc-windows-msvc         | aarch64-linux-android    |
-| ---------- | ------------------------------ | -------------------------|
-| Windows    | :heavy_check_mark:             | :heavy_check_mark:       |
+|                        | Windows            |
+| ---------------------- | ------------------ |
+| x86_64-pc-windows-msvc | :heavy_check_mark: |
+| aarch64-linux-android  | :heavy_check_mark: |
 
 Remarks
 ----------------------------
