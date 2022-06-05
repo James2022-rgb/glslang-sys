@@ -58,7 +58,7 @@ Building
 The C++ library [glslang](https://github.com/KhronosGroup/glslang) is required (though bindings are only provided for its C interface).
 The [build script](src/build.rs) attempts to obtain the native glslang library binaries in the following order of preference:
 
-1. Check out and build from source, if feature `build` is enabled.
+1. Check out and build from source, if feature `build-from-source` is enabled.
 1. Use the prebuilt binaries in the [prebuilt](prebuilt) directory.
 
 #### Building from source
@@ -66,9 +66,9 @@ The [build script](src/build.rs) attempts to obtain the native glslang library b
 CMake and Python 3.x are required in addition to MSVC or Android NDK.
 Refer to the [relevant section](https://github.com/KhronosGroup/glslang#building-cmake) on glslang's README.md.
 
-Build with feature `build`, e.g.
+Build with feature `build-from-source`, e.g.
 ```bash
-cargo build --target x86_64-pc-windows-msvc --features build
+cargo build --target x86_64-pc-windows-msvc --features build-from-source
 ```
 
 (WIP)

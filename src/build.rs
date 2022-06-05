@@ -273,7 +273,7 @@ fn main() {
   let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
 
   let install_dir_path: PathBuf =
-    if cfg!(feature = "build") {
+    if cfg!(feature = "build-from-source") {
       let builder = Builder::new();
       builder.fetch_glslang().unwrap();
 
