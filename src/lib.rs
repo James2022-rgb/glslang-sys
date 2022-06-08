@@ -3,13 +3,72 @@
 #![allow(non_snake_case)]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
+impl Default for glslang_spv_options_t {
+  fn default() -> Self {
+    glslang_spv_options_t {
+      generate_debug_info: false,
+      strip_debug_info: false,
+      disable_optimizer: true,
+      optimize_size: false,
+      disassemble: false,
+      validate: false
+    }
+  }
+}
+
 use std::ffi::CStr;
+use std::os::raw::c_char;
 
 use thiserror::Error;
+use bitflags::bitflags;
+
+#[derive(Debug, Clone, Error)]
+pub struct GlslangErrorLog {
+  pub context: String,
+  pub info_log: String,
+  pub debug_log: String,
+}
+impl std::fmt::Display for GlslangErrorLog {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "context: {}", self.context)?;
+    write!(f, "info_log: {}", self.info_log)?;
+    write!(f, "debug_log: {}", self.debug_log)
+  }
+}
+impl GlslangErrorLog {
+  #[must_use]
+  unsafe fn from_shader(context: String, shader: *mut glslang_shader_t) -> Self {
+    Self::new(context, glslang_shader_get_info_log(shader), glslang_shader_get_info_debug_log(shader))
+  }
+  #[must_use]
+  unsafe fn from_program(context: String, program: *mut glslang_program_t) -> Self {
+    Self::new(context, glslang_program_get_info_log(program), glslang_program_get_info_debug_log(program))
+  }
+
+  /// # Safety
+  /// - `info_log` and `debug_log` MUST point to a valid, null-terminated C string.
+  unsafe fn new(context: String, info_log: *const c_char, debug_log: *const c_char) -> Self {
+    let info_log = CStr::from_ptr(info_log);
+    let debug_log = CStr::from_ptr(debug_log);
+    GlslangErrorLog {
+      context,
+      info_log: info_log.to_str().unwrap().to_owned(),
+      debug_log: debug_log.to_str().unwrap().to_owned(),
+    }
+  }
+}
+
+bitflags! {
+  pub struct CompileOptionFlags: u32 {
+    const GenerateDebugInfo = 0b0001;
+    /// Implies `GenerateDebugInfo`.
+    const AddOpSource = 0b0010;
+  }
+}
 
 /// # Safety
 /// - It is the caller's responsibility to ensure the validity of `input`.
-pub unsafe fn compile(input: &glslang_input_t) -> Result<Vec<u32>, GlslangErrorLog> {
+pub unsafe fn compile(input: &glslang_input_t, option_flags: CompileOptionFlags) -> Result<Vec<u32>, GlslangErrorLog> {
   let shader = glslang_shader_create(input);
 
   if glslang_shader_preprocess(shader, input) == 0 {
@@ -28,7 +87,21 @@ pub unsafe fn compile(input: &glslang_input_t) -> Result<Vec<u32>, GlslangErrorL
     return Err(GlslangErrorLog::from_program("glslang_program_link".to_string(), program));
   }
 
-  glslang_program_SPIRV_generate(program, input.stage);
+  if option_flags.contains(CompileOptionFlags::AddOpSource) {
+    let code_c_str = CStr::from_ptr(input.code);
+    glslang_program_add_source_text(program, input.stage, code_c_str.as_ptr(), code_c_str.to_str().unwrap().len() as size_t);
+
+    // let filename_c_string = std::ffi::CString::new("test").unwrap();
+    // glslang_program_set_source_file(program, input.stage, filename_c_string.as_ptr());
+  }
+
+  let mut spv_options = glslang_spv_options_t {
+    generate_debug_info: option_flags.intersects(CompileOptionFlags::GenerateDebugInfo | CompileOptionFlags::AddOpSource),
+    validate: true,
+    ..Default::default()
+  };
+
+  glslang_program_SPIRV_generate_with_options(program, input.stage, &mut spv_options);
 
   if !glslang_program_SPIRV_get_messages(program).is_null() {
     let messages_c_str = CStr::from_ptr(glslang_program_SPIRV_get_messages(program));
@@ -37,51 +110,12 @@ pub unsafe fn compile(input: &glslang_input_t) -> Result<Vec<u32>, GlslangErrorL
 
   let spirv_size = glslang_program_SPIRV_get_size(program) as usize;
   let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
-
   let spirv = std::slice::from_raw_parts(spirv_ptr, spirv_size).to_vec();
 
   glslang_program_delete(program);
   glslang_shader_delete(shader);
 
   Ok(spirv)
-}
-
-#[derive(Debug, Clone, Error)]
-pub struct GlslangErrorLog {
-  pub context: String,
-  pub info_log: String,
-  pub debug_log: String,
-}
-impl std::fmt::Display for GlslangErrorLog {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "context: {}", self.context)?;
-    write!(f, "info_log: {}", self.info_log)?;
-    write!(f, "debug_log: {}", self.debug_log)
-  }
-}
-impl GlslangErrorLog {
-  #[must_use]
-  unsafe fn from_shader(context: String, shader: *mut glslang_shader_t) -> Self {    
-    let log_c_str = CStr::from_ptr(glslang_shader_get_info_log(shader));
-    let debug_log_c_str = CStr::from_ptr(glslang_shader_get_info_debug_log(shader));
-
-    GlslangErrorLog {
-      context,
-      info_log: log_c_str.to_str().unwrap().to_owned(),
-      debug_log: debug_log_c_str.to_str().unwrap().to_owned(),
-    }
-  }
-  #[must_use]
-  unsafe fn from_program(context: String, program: *mut glslang_program_t) -> Self {    
-    let log_c_str = CStr::from_ptr(glslang_program_get_info_log(program));
-    let debug_log_c_str = CStr::from_ptr(glslang_program_get_info_debug_log(program));
-
-    GlslangErrorLog {
-      context,
-      info_log: log_c_str.to_str().unwrap().to_owned(),
-      debug_log: debug_log_c_str.to_str().unwrap().to_owned(),
-    }
-  }
 }
 
 #[cfg(test)]
@@ -133,7 +167,7 @@ mod tests {
         resource: &DEFAULT_RESOURCE_LIMITS as *const glslang_resource_t,
       };
 
-      let spirv = compile(&input)?;
+      let spirv = compile(&input, CompileOptionFlags::empty())?;
       println!("SPIR-V word count: {}", spirv.len());
 
       Ok(())
