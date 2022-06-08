@@ -75,6 +75,9 @@ impl Builder {
     // Idea taken from:
     //  https://github.com/meh/rust-ffmpeg-sys
     //  https://github.com/google/shaderc-rs
+
+    const GLSLANG_CLONE_URL: &str = "https://github.com/James2022-rgb/glslang";
+    const GLSLANG_CLONE_BRANCH: &str = "feature/c_interface_opsource_support";
   
     let original_current_dir = env::current_dir().unwrap();
     defer! {
@@ -84,7 +87,8 @@ impl Builder {
     let _ = std::fs::remove_dir_all(&self.glslang_clone_dst_dir_path);
     let output = Command::new("git")
       .arg("clone")
-      .arg("https://github.com/KhronosGroup/glslang")
+      .arg(GLSLANG_CLONE_URL)
+      .arg("-b").arg(GLSLANG_CLONE_BRANCH)
       .arg(&self.glslang_clone_dst_dir_path)
       .output()?;
     io::stdout().write_all(&output.stdout).unwrap();
