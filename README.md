@@ -1,5 +1,6 @@
 # Rust FFI bindings for glslang
 
+![Build](https://github.com/James2022-rgb/glslang-sys/actions/workflows/rust_ci.yml/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Low-level, unsafe Rust bindings to the C interface of [glslang](https://github.com/KhronosGroup/glslang), generated with [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
