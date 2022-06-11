@@ -18,7 +18,7 @@ env_logger = "0.9"
 log = "0.4"
 thiserror = "1.0"
 scopeguard = "1.1"
-bindgen = { git = "https://github.com/rust-lang/rust-bindgen", branch = "master", version = "0.59" } # `allowlist_file` seems to be missing in the version on crates.io
+bindgen = { git = "https://github.com/rust-lang/rust-bindgen", branch = "master", version = "0.60.1" } # `allowlist_file` seems to be missing in the version on crates.io
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 kernel32-sys = "0.2"
