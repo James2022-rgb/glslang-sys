@@ -76,8 +76,8 @@ impl Builder {
     //  https://github.com/meh/rust-ffmpeg-sys
     //  https://github.com/google/shaderc-rs
 
-    const GLSLANG_CLONE_URL: &str = "https://github.com/James2022-rgb/glslang";
-    const GLSLANG_CLONE_BRANCH: &str = "feature/c_interface_opsource_support";
+    const GLSLANG_CLONE_URL: &str = "https://github.com/KhronosGroup/glslang";
+    const GLSLANG_CLONE_BRANCH: &str = "master";
   
     let original_current_dir = env::current_dir().unwrap();
     defer! {
