@@ -135,7 +135,7 @@ mod tests {
 
   #[test]
   fn compile_vertex_shader() -> Result<(), GlslangErrorLog> {
-    unsafe {
+    let spirv = unsafe {
       glslang_initialize_process();
       scopeguard::defer! {
         glslang_finalize_process();
@@ -169,11 +169,20 @@ mod tests {
         resource: &DEFAULT_RESOURCE_LIMITS as *const glslang_resource_t,
       };
 
-      let spirv = compile(&input, CompileOptionFlags::empty())?;
+      let spirv = compile(&input, CompileOptionFlags::AddOpSource, Some("vertex_shader.vert"))?;
       println!("SPIR-V word count: {}", spirv.len());
+      spirv
+    };
 
-      Ok(())
+    {
+      let spirv_u8 = unsafe {
+        std::slice::from_raw_parts(spirv.as_ptr() as *const u8, spirv.len() * std::mem::size_of::<u32>())
+      };
+
+      std::fs::write("vertex_shader.spv", spirv_u8).unwrap();
     }
+
+    Ok(())
   }
 }
 
