@@ -68,7 +68,7 @@ bitflags! {
 
 /// # Safety
 /// - It is the caller's responsibility to ensure the validity of `input`.
-pub unsafe fn compile(input: &glslang_input_t, option_flags: CompileOptionFlags) -> Result<Vec<u32>, GlslangErrorLog> {
+pub unsafe fn compile(input: &glslang_input_t, option_flags: CompileOptionFlags, source_file_name: Option<&str>) -> Result<Vec<u32>, GlslangErrorLog> {
   let shader = glslang_shader_create(input);
 
   if glslang_shader_preprocess(shader, input) == 0 {
@@ -91,8 +91,10 @@ pub unsafe fn compile(input: &glslang_input_t, option_flags: CompileOptionFlags)
     let code_c_str = CStr::from_ptr(input.code);
     glslang_program_add_source_text(program, input.stage, code_c_str.as_ptr(), code_c_str.to_str().unwrap().len() as size_t);
 
-    // let filename_c_string = std::ffi::CString::new("test").unwrap();
-    // glslang_program_set_source_file(program, input.stage, filename_c_string.as_ptr());
+    if let Some(source_file_name) = source_file_name {
+      let source_file_name_c_string = std::ffi::CString::new(source_file_name).unwrap();
+      glslang_program_set_source_file(program, input.stage, source_file_name_c_string.as_ptr());
+    }
   }
 
   let mut spv_options = glslang_spv_options_t {
