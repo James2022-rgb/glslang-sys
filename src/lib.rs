@@ -11,7 +11,9 @@ impl Default for glslang_spv_options_t {
       disable_optimizer: true,
       optimize_size: false,
       disassemble: false,
-      validate: false
+      validate: false,
+      emit_nonsemantic_shader_debug_info: false,
+      emit_nonsemantic_shader_debug_source: false,
     }
   }
 }
@@ -280,6 +282,15 @@ pub const DEFAULT_RESOURCE_LIMITS: glslang_resource_t = glslang_resource_t {
   max_task_work_group_size_y_nv: 1,
   max_task_work_group_size_z_nv: 1,
   max_mesh_view_count_nv: 4,
+  max_mesh_output_vertices_ext: 256,
+  max_mesh_output_primitives_ext: 256,
+  max_mesh_work_group_size_x_ext: 128,
+  max_mesh_work_group_size_y_ext: 128,
+  max_mesh_work_group_size_z_ext: 128,
+  max_task_work_group_size_x_ext: 128,
+  max_task_work_group_size_y_ext: 128,
+  max_task_work_group_size_z_ext: 128,
+  max_mesh_view_count_ext: 4,
   maxDualSourceDrawBuffersEXT: 1,
   limits: glslang_limits_s {
       non_inductive_for_loops: true,
