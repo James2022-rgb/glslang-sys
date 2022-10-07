@@ -1,0 +1,9 @@
+{
+    "repos": [
+        {
+            "name": "glslang",
+            "url": "https://github.com/KhronosGroup/glslang.git",
+            "commit": "28b53119bdfbc43eae532641337a7adbb315b273"
+        }
+    ]
+}
