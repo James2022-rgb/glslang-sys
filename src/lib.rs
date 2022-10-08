@@ -18,8 +18,11 @@ impl Default for glslang_spv_options_t {
   }
 }
 
-use std::ffi::CStr;
-use std::os::raw::c_char;
+use std::{
+  ffi::CStr,
+  os::raw::c_char,
+  ptr::NonNull,
+};
 
 use thiserror::Error;
 use bitflags::bitflags;
@@ -70,8 +73,12 @@ bitflags! {
 
 /// # Safety
 /// - It is the caller's responsibility to ensure the validity of `input`.
-pub unsafe fn compile(input: &glslang_input_t, option_flags: CompileOptionFlags, source_file_name: Option<&str>) -> Result<Vec<u32>, GlslangErrorLog> {
+pub unsafe fn compile(input: &glslang_input_t, preamble: Option<NonNull<c_char>>, option_flags: CompileOptionFlags, source_file_name: Option<&str>) -> Result<Vec<u32>, GlslangErrorLog> {
   let shader = glslang_shader_create(input);
+
+  if let Some(preamble) = preamble {
+    glslang_shader_set_preamble(shader, preamble.as_ptr());
+  }
 
   if glslang_shader_preprocess(shader, input) == 0 {
     return Err(GlslangErrorLog::from_shader("glslang_shader_preprocess".to_string(), shader));
@@ -171,7 +178,7 @@ mod tests {
         resource: &DEFAULT_RESOURCE_LIMITS as *const glslang_resource_t,
       };
 
-      let spirv = compile(&input, CompileOptionFlags::AddOpSource, Some("vertex_shader.vert"))?;
+      let spirv = compile(&input, None, CompileOptionFlags::AddOpSource, Some("vertex_shader.vert"))?;
       println!("SPIR-V word count: {}", spirv.len());
       spirv
     };
