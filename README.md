@@ -25,8 +25,7 @@ Build target support
 
 Remarks
 ----------------------------
-~~Our [forked version of glslang](https://github.com/James2022-rgb/glslang/tree/feature/c_interface_opsource_support) is currently used that has `OpSource` support.~~
-Merged to upstream !
+Our [forked version of glslang](https://github.com/James2022-rgb/glslang/tree/feature/c_interface_preamble_support) is currently used that has preamble support.
 
 glslang is built with:
  - `ENABLE_OPT=OFF`
