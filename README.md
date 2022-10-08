@@ -18,10 +18,11 @@ Motivation
 
 Build target support
 ----------------------------
-|                        | Windows            |
-| ---------------------- | ------------------ |
-| x86_64-pc-windows-msvc | :heavy_check_mark: |
-| aarch64-linux-android  | :heavy_check_mark: |
+|                          | Windows            | Linux              |
+| ------------------------ | ------------------ | ------------------ |
+| x86_64-pc-windows-msvc   | :heavy_check_mark: |                    |
+| aarch64-linux-android    | :heavy_check_mark: |                    |
+| x86_64-unknown-linux-gnu |                    | :heavy_check_mark: |
 
 Remarks
 ----------------------------
@@ -61,7 +62,7 @@ Building
 The C++ library [glslang](https://github.com/KhronosGroup/glslang) is required (though bindings are only provided for its C interface).
 The [build script](src/build.rs) attempts to obtain the native glslang library binaries in the following order of preference:
 
-1. Check out and build from source, if feature `build-from-source` is enabled.
+1. Check out and build from source, if feature `build-from-source` is enabled. The repository and commit SHA are defined in [known_good.json](known_good.json)
 1. Use the prebuilt binaries in the [prebuilt](prebuilt) directory.
 
 #### Building from source
