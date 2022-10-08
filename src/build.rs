@@ -57,6 +57,7 @@ mod builder {
 
   #[derive(Error, Debug)]
   pub enum BuilderError {
+    #[cfg(target_os = "windows")]
     #[error("No unused drive letter found for working around MAX_PATH limitation on Windows")]
     NoAvailableDriveLetter,
     #[error("Failed to configure project with cmake")]
@@ -134,7 +135,10 @@ mod builder {
         .output()?;
       io::stdout().write_all(&output.stdout).unwrap();
     
+      #[cfg(target_os = "windows")]
       Command::new("python").arg("update_glslang_sources.py").status().unwrap();
+      #[cfg(not(target_os = "windows"))]
+      Command::new("./update_glslang_sources.py").status().unwrap();
       
       if output.status.success() {
         Ok(())
@@ -146,7 +150,7 @@ mod builder {
 
     pub fn build_glslang(&self, target_os: &str, target_arch: &str) -> Result<PathBuf, BuilderError> {
       // Building is only supported for these platforms for now:
-      assert!(cfg!(target_os = "windows"), "Building only supported on Windows.");
+      assert!(cfg!(any(target_os = "windows", target_os = "linux")), "Building only supported on Windows/Linux.");
 
       //
       // Host: Windows, Target: x86_64-pc-windows-msvc
@@ -156,6 +160,10 @@ mod builder {
       // Host: Windows, Target: aarch64-linux-android
       //  cmake .. -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="install" -DENABLE_OPT=OFF -DENABLE_SPVREMAPPER=OFF -DSPIRV_SKIP_TESTS=ON -DSPIRV_SKIP_EXECUTABLES=ON -DANDROID_ABI=arm64-v8a -DCMAKE_BUILD_TYPE=Release -DANDROID_STL=c++_shared -DANDROID_PLATFORM=android-24 -DCMAKE_SYSTEM_NAME=Android -DANDROID_TOOLCHAIN=clang -DANDROID_ARM_MODE=arm -DCMAKE_MAKE_PROGRAM=%ANDROID_NDK_HOME%\prebuilt\windows-x86_64\bin\make.exe -DCMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_HOME%/build/cmake/android.toolchain.cmake
       //  cmake --build . --config Release --target install
+      //
+      // Host: Linux, Target: x86_64-unknown-linux-gnu
+      //  cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="install" -DENABLE_OPT=OFF -DENABLE_SPVREMAPPER=OFF -DSPIRV_SKIP_TESTS=ON -DSPIRV_SKIP_EXECUTABLES=ON
+      //  make -j4 install
       //
 
       let original_current_dir = env::current_dir().unwrap();
@@ -251,26 +259,56 @@ mod builder {
             return Err(BuilderError::ConfigureFailed { output });
           }
         },
+        "linux" => {
+          let output = {
+            let mut command = Command::new("cmake");
+            command
+              .arg("..")
+              .arg(r#"-DCMAKE_BUILD_TYPE=Release"#)
+              .arg(format!(r#"-DCMAKE_INSTALL_PREFIX={}"#, install_dir));
+            add_cmake_glslang_options(&mut command);
+            add_cmake_spirv_tools_options(&mut command);
+            command.output().unwrap()
+          };
+          if !output.status.success() {
+            return Err(BuilderError::ConfigureFailed { output });
+          }
+        },
         _ => panic!("Unexpected target_os:{:?}", target_os)
       };
 
       // Build.
-      // cmake --build . --config Release --target install
-      let output = Command::new("cmake")
-        .arg("--build")
-        .arg(".")
-        .arg("--config").arg("Release")
-        .arg("--target").arg(install_dir)
-        .arg("--parallel").arg("8")
-        .output()
-        .unwrap();
+      #[cfg(target_os = "windows")]
+      {
+        let output = Command::new("cmake")
+          .arg("--build")
+          .arg(".")
+          .arg("--config").arg("Release")
+          .arg("--target").arg(install_dir)
+          .arg("--parallel").arg("8")
+          .output().unwrap();
 
-      if output.status.success() {
-        Ok(install_dir_path)
+          if output.status.success() {
+            Ok(install_dir_path)
+          }
+          else {
+            Err(BuilderError::BuildFailed { output })
+          }
       }
-      else {
-        Err(BuilderError::BuildFailed { output })
-      }
+      #[cfg(target_os = "linux")]
+      {
+        let output = Command::new("make")
+          .arg("-j4")
+          .arg("install")
+          .output().unwrap();
+
+          if output.status.success() {
+            Ok(install_dir_path)
+          }
+          else {
+            Err(BuilderError::BuildFailed { output })
+          }
+      }      
     }
   }
 
@@ -340,6 +378,10 @@ mod prebuilt {
         assert_eq!(target_arch, "aarch64");
         "aarch64-linux-android"
       },
+      "linux" => {
+        assert_eq!(target_arch, "x86_64");
+        "x86_64-unknown-linux-gnu"
+      },
       _ => panic!("Unexpected CARGO_CFG_TARGET_OS:{:?}", target_os)
     };
 
@@ -401,6 +443,7 @@ fn main() {
           Ok(path) => path,
           Err(error) => {
             match error {
+              #[cfg(target_os = "windows")]
               BuilderError::NoAvailableDriveLetter => (),
               BuilderError::ConfigureFailed { output } => {
                 io::stderr().write_all(&output.stdout).unwrap();
