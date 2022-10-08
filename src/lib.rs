@@ -21,7 +21,6 @@ impl Default for glslang_spv_options_t {
 use std::{
   ffi::CStr,
   os::raw::c_char,
-  ptr::NonNull,
 };
 
 use thiserror::Error;
@@ -73,11 +72,11 @@ bitflags! {
 
 /// # Safety
 /// - It is the caller's responsibility to ensure the validity of `input`.
-pub unsafe fn compile(input: &glslang_input_t, preamble: Option<NonNull<c_char>>, option_flags: CompileOptionFlags, source_file_name: Option<&str>) -> Result<Vec<u32>, GlslangErrorLog> {
+pub unsafe fn compile(input: &glslang_input_t, preamble: Option<*const c_char>, option_flags: CompileOptionFlags, source_file_name: Option<&str>) -> Result<Vec<u32>, GlslangErrorLog> {
   let shader = glslang_shader_create(input);
 
   if let Some(preamble) = preamble {
-    glslang_shader_set_preamble(shader, preamble.as_ptr());
+    glslang_shader_set_preamble(shader, preamble);
   }
 
   if glslang_shader_preprocess(shader, input) == 0 {
@@ -119,9 +118,12 @@ pub unsafe fn compile(input: &glslang_input_t, preamble: Option<NonNull<c_char>>
     println!("{:?}", messages_c_str);
   }
 
-  let spirv_size = glslang_program_SPIRV_get_size(program) as usize;
-  let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
-  let spirv = std::slice::from_raw_parts(spirv_ptr, spirv_size).to_vec();
+  
+  let spirv = {
+    let spirv_size = glslang_program_SPIRV_get_size(program) as usize;
+    let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
+    std::slice::from_raw_parts(spirv_ptr, spirv_size).to_vec()
+  };
 
   glslang_program_delete(program);
   glslang_shader_delete(shader);
