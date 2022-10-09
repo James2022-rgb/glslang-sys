@@ -475,7 +475,9 @@ fn main() {
     println!("cargo:rustc-link-lib=static={}", lib);
   }
 
-  println!("cargo:rustc-link-lib=dylib=stdc++");
+  if target_os == "linux" {
+    println!("cargo:rustc-link-lib=dylib=stdc++");
+  }
   
   // For Android, link to `c++_shared`.
   if target_os == "android" {
