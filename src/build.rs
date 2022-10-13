@@ -421,7 +421,10 @@ fn main() {
   env_logger::init();
 
   println!("cargo:rerun-if-changed={}", WRAPPER_HEADER);
-  if !cfg!(feature = "build-from-source") {
+  if cfg!(feature = "build-from-source") {
+    println!("cargo:rerun-if-changed=known_good.json");
+  }
+  else {
     println!("cargo:rerun-if-changed=prebuilt/version.txt");
   }
 
