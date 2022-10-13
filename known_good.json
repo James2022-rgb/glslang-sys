@@ -2,8 +2,8 @@
     "repos": [
         {
             "name": "glslang",
-            "url": "https://github.com/James2022-rgb/glslang.git",
-            "commit": "573e9849be03983e929716f3849f2abb29096c96"
+            "url": "https://github.com/KhronosGroup/glslang.git",
+            "commit": "568e233ecfe24f7140d318f65b24c3962ff96d09"
         }
     ]
 }
