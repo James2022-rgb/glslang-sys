@@ -88,12 +88,12 @@ mod builder {
       // Idea taken from:
       //  https://github.com/meh/rust-ffmpeg-sys
       //  https://github.com/google/shaderc-rs
-    
+
       let original_current_dir = env::current_dir().unwrap();
       defer! {
         env::set_current_dir(original_current_dir).unwrap()
       }
-    
+
       let _ = std::fs::remove_dir_all(&self.glslang_clone_dst_dir_path);
       std::fs::create_dir_all(&self.glslang_clone_dst_dir_path).unwrap();
 
@@ -127,19 +127,19 @@ mod builder {
           .output()?;
         io::stdout().write_all(&output.stdout).unwrap();
       }
-    
+
       let output = Command::new("git")
         .arg("clone")
         .arg("https://github.com/google/googletest.git")
         .arg("External/googletest")
         .output()?;
       io::stdout().write_all(&output.stdout).unwrap();
-    
+
       #[cfg(target_os = "windows")]
       Command::new("python").arg("update_glslang_sources.py").status().unwrap();
       #[cfg(not(target_os = "windows"))]
       Command::new("./update_glslang_sources.py").status().unwrap();
-      
+
       if output.status.success() {
         Ok(())
       }
@@ -198,7 +198,7 @@ mod builder {
       let build_dir = format!("build-{}-{}", target_os, target_arch);
       let build_dir_path = self.glslang_clone_dst_dir_path.join(&build_dir);
       let mapped_build_dir_path = mapped_glslang_clone_dst_dir_path.join(&build_dir);
-      
+
       std::fs::create_dir_all(&mapped_build_dir_path).unwrap();
       env::set_current_dir(&mapped_build_dir_path).unwrap();
 
@@ -308,7 +308,7 @@ mod builder {
           else {
             Err(BuilderError::BuildFailed { output })
           }
-      }      
+      }
     }
   }
 
@@ -366,7 +366,7 @@ mod prebuilt {
   }
 
   pub fn get_prebuilt_glslang_install_dir(known_good_repo: &known_good::Repo) -> Result<PathBuf, PrebuiltError> {
-    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();  
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
 
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     let target_dir = match target_os.as_str() {
@@ -481,7 +481,7 @@ fn main() {
   if target_os == "linux" {
     println!("cargo:rustc-link-lib=dylib=stdc++");
   }
-  
+
   // For Android, link to `c++_shared`.
   if target_os == "android" {
     println!("cargo:rustc-link-lib=c++_shared");
@@ -497,19 +497,28 @@ fn main() {
     .clang_arg(format!("-I{}", glslang_include_dir.to_str().unwrap()));
 
   // For Android, add header search paths:
-  //  %ANDROID_NDK_HOME%/sysroot/usr/include
-  //  %ANDROID_NDK_HOME%/sysroot/usr/include/(aarch64-linux-android|arm-linux-androideabi)
+  //  %ANDROID_NDK_HOME%/toolchains/llvm/prebuilt/%HOST_TAG%/sysroot/usr/include
+  //  %ANDROID_NDK_HOME%/toolchains/llvm/prebuilt/%HOST_TAG%/sysroot/usr/include/(aarch64-linux-android|arm-linux-androideabi)
   if target_os == "android" {
     let android_ndk_home = env::var("ANDROID_NDK_HOME").expect("Environment variable ANDROID_NDK_HOME not set !");
     info!("ANDROID_NDK_HOME: {:?}", android_ndk_home);
-    
+
+    // https://developer.android.com/ndk/guides/other_build_systems#overview
+    #[cfg(target_os = "windows")]
+    let host_tag = "windows-x86_64";
+    #[cfg(target_os = "linux")]
+    let host_tag = "linux-x86_64";
+    #[cfg(target_os = "macos")]
+    let host_tag = "darwin-x86_64";
+
+    let android_ndk_include_dir: PathBuf = [ android_ndk_home.as_str(), &format!(r#"toolchains/llvm/prebuilt/{}/sysroot/usr/include"#, host_tag) ].iter().collect();
+
     let android_arch_name = match target_arch.as_str() {
       "aarch64" => "aarch64-linux-android",
       "arm"     => "arm-linux-androideabi",
       _ => panic!("Unexpected CARGO_CFG_TARGET_ARCH: {:?}", target_arch),
     };
 
-    let android_ndk_include_dir: PathBuf = [ android_ndk_home.as_str(), r#"sysroot/usr/include"# ].iter().collect();
     let android_ndk_arch_include_dir: PathBuf = android_ndk_include_dir.join(android_arch_name);
     info!("Android NDK include directory: {:?}", android_ndk_include_dir);
     info!("Android NDK architecture-dependent include directory: {:?}", android_ndk_arch_include_dir);
