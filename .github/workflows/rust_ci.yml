@@ -15,7 +15,7 @@ jobs:
     - name: Build
       run: cargo build --verbose --features build-from-source
     - name: Run tests
-      run: cargo test --verbose -- --test-threads=1
+      run: cargo test --verbose
   linux-from-source:
     runs-on: ubuntu-latest
     steps:
@@ -23,4 +23,4 @@ jobs:
     - name: Build
       run: cargo build --verbose --features build-from-source
     - name: Run tests
-      run: cargo test --verbose -- --test-threads=1
+      run: cargo test --verbose
