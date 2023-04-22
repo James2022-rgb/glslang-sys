@@ -255,6 +255,44 @@ pub const DEFAULT_RESOURCE_LIMITS: glslang_resource_t = glslang_resource_t {
   },
 };
 
+pub use process::GlslangProcess;
+
+mod process {
+  use std::sync::Mutex;
+  use once_cell::sync::Lazy;
+  use super::{glslang_initialize_process, glslang_finalize_process};
+
+  static GLSLANG_PROCESS_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+
+  /// Calls [`glslang_initialize_process`] on construction, and [`glslang_finalize_process`] on [`Drop`].
+  /// ## Thread safety
+  /// Safe.
+  /// Can be constructed/dropped concurrently in the same process, making it suitable for running `cargo test` without the use of `--test-threads=1`.
+  pub struct GlslangProcess {
+    _private: (),
+  }
+  impl Default for GlslangProcess {
+    fn default() -> Self {
+      let _lock = GLSLANG_PROCESS_MUTEX.lock().unwrap();
+
+      unsafe {
+        glslang_initialize_process();
+      }
+
+      Self { _private: () }
+    }
+  }
+  impl Drop for GlslangProcess {
+    fn drop(&mut self) {
+      let _lock = GLSLANG_PROCESS_MUTEX.lock().unwrap();
+
+      unsafe {
+        glslang_finalize_process();
+      }
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use std::ffi::CString;
@@ -262,19 +300,13 @@ mod tests {
 
   #[test]
   fn initialize_and_finalize_process() {
-    unsafe {
-      glslang_initialize_process();
-      glslang_finalize_process();
-    }
+    let _process = GlslangProcess::default();
   }
 
   #[test]
   fn compile_vertex_shader() -> Result<(), GlslangErrorLog> {
     let spirv = unsafe {
-      glslang_initialize_process();
-      scopeguard::defer! {
-        glslang_finalize_process();
-      }
+      let _process = GlslangProcess::default();
 
       let source =
         r##"
