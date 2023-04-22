@@ -20,9 +20,9 @@ Build target support
 ----------------------------
 |                          | Windows            | Linux              |
 | ------------------------ | ------------------ | ------------------ |
-| x86_64-pc-windows-msvc   | :heavy_check_mark: |                    |
-| aarch64-linux-android    | :heavy_check_mark: |                    |
-| x86_64-unknown-linux-gnu |                    | :heavy_check_mark: |
+| x86_64-pc-windows-msvc   | :white_check_mark: |                    |
+| aarch64-linux-android    | :white_check_mark: |                    |
+| x86_64-unknown-linux-gnu |                    | :white_check_mark: |
 
 Remarks
 ----------------------------
