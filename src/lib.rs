@@ -49,7 +49,7 @@ impl GlslangErrorLog {
     Self::new(context, glslang_program_get_info_log(program), glslang_program_get_info_debug_log(program))
   }
 
-  /// # Safety
+  /// ## Safety
   /// - `info_log` and `debug_log` MUST point to a valid, null-terminated C string.
   unsafe fn new(context: String, info_log: *const c_char, debug_log: *const c_char) -> Self {
     let info_log = CStr::from_ptr(info_log);
@@ -70,9 +70,14 @@ bitflags! {
   }
 }
 
-/// # Safety
+/// ## Safety
 /// - It is the caller's responsibility to ensure the validity of `input`.
-pub unsafe fn compile(input: &glslang_input_t, preamble: Option<*const c_char>, option_flags: CompileOptionFlags, source_file_name: Option<&str>) -> Result<Vec<u32>, GlslangErrorLog> {
+pub unsafe fn compile(
+  input: &glslang_input_t,
+  preamble: Option<*const c_char>,
+  option_flags: CompileOptionFlags,
+  source_file_name: Option<&str>
+) -> Result<Vec<u32>, GlslangErrorLog> {
   let shader = glslang_shader_create(input);
 
   if let Some(preamble) = preamble {
@@ -118,8 +123,7 @@ pub unsafe fn compile(input: &glslang_input_t, preamble: Option<*const c_char>, 
     println!("{:?}", messages_c_str);
   }
 
-  
-  let spirv = {
+  let spirv: Vec<u32> = {
     let spirv_size = glslang_program_SPIRV_get_size(program) as usize;
     let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
     std::slice::from_raw_parts(spirv_ptr, spirv_size).to_vec()
