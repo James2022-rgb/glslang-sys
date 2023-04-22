@@ -138,72 +138,6 @@ pub unsafe fn compile(
   Ok(spirv)
 }
 
-#[cfg(test)]
-mod tests {
-  use std::ffi::CString;
-  use super::*;
-
-  #[test]
-  fn initialize_and_finalize_process() {
-    unsafe {
-      glslang_initialize_process();
-      glslang_finalize_process();
-    }
-  }
-
-  #[test]
-  fn compile_vertex_shader() -> Result<(), GlslangErrorLog> {
-    let spirv = unsafe {
-      glslang_initialize_process();
-      scopeguard::defer! {
-        glslang_finalize_process();
-      }
-
-      let source =
-        r##"
-        #version 450
-        layout(location = 0) out vec2 out_uv;
-        void main() {
-          out_uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-          gl_Position = vec4(out_uv * 2.0 + -1.0, 0.0, 1.0);
-        }
-        "##;
-
-      let source_c_string = CString::new(source).unwrap();
-
-      let input = glslang_input_t {
-        language: glslang_source_t_GLSLANG_SOURCE_GLSL,
-        stage: glslang_stage_t_GLSLANG_STAGE_VERTEX,
-        client: glslang_client_t_GLSLANG_CLIENT_VULKAN,
-        client_version: glslang_target_client_version_t_GLSLANG_TARGET_VULKAN_1_1,
-        target_language: glslang_target_language_t_GLSLANG_TARGET_SPV,
-        target_language_version: glslang_target_language_version_t_GLSLANG_TARGET_SPV_1_0,
-        code: source_c_string.as_ptr(),
-        default_version: 100,
-        default_profile: glslang_profile_t_GLSLANG_NO_PROFILE,
-        force_default_version_and_profile: 0,
-        forward_compatible: 0,
-        messages: glslang_messages_t_GLSLANG_MSG_DEFAULT_BIT | glslang_messages_t_GLSLANG_MSG_SPV_RULES_BIT | glslang_messages_t_GLSLANG_MSG_VULKAN_RULES_BIT,
-        resource: &DEFAULT_RESOURCE_LIMITS as *const glslang_resource_t,
-      };
-
-      let spirv = compile(&input, None, CompileOptionFlags::AddOpSource, Some("vertex_shader.vert"))?;
-      println!("SPIR-V word count: {}", spirv.len());
-      spirv
-    };
-
-    {
-      let spirv_u8 = unsafe {
-        std::slice::from_raw_parts(spirv.as_ptr() as *const u8, spirv.len() * std::mem::size_of::<u32>())
-      };
-
-      std::fs::write("vertex_shader.spv", spirv_u8).unwrap();
-    }
-
-    Ok(())
-  }
-}
-
 /// Values copied from ` glslang/StandAlone/ResourceLimits.cpp `.
 pub const DEFAULT_RESOURCE_LIMITS: glslang_resource_t = glslang_resource_t {
   max_lights: 32,
@@ -320,3 +254,69 @@ pub const DEFAULT_RESOURCE_LIMITS: glslang_resource_t = glslang_resource_t {
       general_constant_matrix_vector_indexing: true,
   },
 };
+
+#[cfg(test)]
+mod tests {
+  use std::ffi::CString;
+  use super::*;
+
+  #[test]
+  fn initialize_and_finalize_process() {
+    unsafe {
+      glslang_initialize_process();
+      glslang_finalize_process();
+    }
+  }
+
+  #[test]
+  fn compile_vertex_shader() -> Result<(), GlslangErrorLog> {
+    let spirv = unsafe {
+      glslang_initialize_process();
+      scopeguard::defer! {
+        glslang_finalize_process();
+      }
+
+      let source =
+        r##"
+        #version 450
+        layout(location = 0) out vec2 out_uv;
+        void main() {
+          out_uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+          gl_Position = vec4(out_uv * 2.0 + -1.0, 0.0, 1.0);
+        }
+        "##;
+
+      let source_c_string = CString::new(source).unwrap();
+
+      let input = glslang_input_t {
+        language: glslang_source_t_GLSLANG_SOURCE_GLSL,
+        stage: glslang_stage_t_GLSLANG_STAGE_VERTEX,
+        client: glslang_client_t_GLSLANG_CLIENT_VULKAN,
+        client_version: glslang_target_client_version_t_GLSLANG_TARGET_VULKAN_1_1,
+        target_language: glslang_target_language_t_GLSLANG_TARGET_SPV,
+        target_language_version: glslang_target_language_version_t_GLSLANG_TARGET_SPV_1_0,
+        code: source_c_string.as_ptr(),
+        default_version: 100,
+        default_profile: glslang_profile_t_GLSLANG_NO_PROFILE,
+        force_default_version_and_profile: 0,
+        forward_compatible: 0,
+        messages: glslang_messages_t_GLSLANG_MSG_DEFAULT_BIT | glslang_messages_t_GLSLANG_MSG_SPV_RULES_BIT | glslang_messages_t_GLSLANG_MSG_VULKAN_RULES_BIT,
+        resource: &DEFAULT_RESOURCE_LIMITS as *const glslang_resource_t,
+      };
+
+      let spirv = compile(&input, None, CompileOptionFlags::AddOpSource, Some("vertex_shader.vert"))?;
+      println!("SPIR-V word count: {}", spirv.len());
+      spirv
+    };
+
+    {
+      let spirv_u8 = unsafe {
+        std::slice::from_raw_parts(spirv.as_ptr() as *const u8, spirv.len() * std::mem::size_of::<u32>())
+      };
+
+      std::fs::write("vertex_shader.spv", spirv_u8).unwrap();
+    }
+
+    Ok(())
+  }
+}
