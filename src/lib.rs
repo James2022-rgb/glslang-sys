@@ -79,6 +79,9 @@ pub unsafe fn compile(
   source_file_name: Option<&str>
 ) -> Result<Vec<u32>, GlslangErrorLog> {
   let shader = glslang_shader_create(input);
+  scopeguard::defer! {
+    glslang_shader_delete(shader);
+  }
 
   if let Some(preamble) = preamble {
     glslang_shader_set_preamble(shader, preamble);
@@ -92,6 +95,9 @@ pub unsafe fn compile(
   }
 
   let program = glslang_program_create();
+  scopeguard::defer! {
+    glslang_program_delete(program);
+  }
   glslang_program_add_shader(program, shader);
 
   // `glslang_program_link` takes `c_int` but `messages` (`glslang_messages_t` being an enum) can be `i32` or `u32` depending on build target.
@@ -128,9 +134,6 @@ pub unsafe fn compile(
     let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
     std::slice::from_raw_parts(spirv_ptr, spirv_size).to_vec()
   };
-
-  glslang_program_delete(program);
-  glslang_shader_delete(shader);
 
   Ok(spirv)
 }
