@@ -205,7 +205,7 @@ mod builder {
       let install_dir = "install";
       let install_dir_path = build_dir_path.join(install_dir);
       let mapped_install_dir_path = mapped_build_dir_path.join(install_dir);
-      std::fs::create_dir_all(&mapped_install_dir_path).unwrap();
+      std::fs::create_dir_all(mapped_install_dir_path).unwrap();
 
       // Configure.
       match target_os {
