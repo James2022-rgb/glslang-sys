@@ -3,7 +3,7 @@
         {
             "name": "glslang",
             "url": "https://github.com/KhronosGroup/glslang.git",
-            "commit": "568e233ecfe24f7140d318f65b24c3962ff96d09"
+            "commit": "14e5a04e70057972eef8a40df422e30a3b70e4b5"
         }
     ]
 }

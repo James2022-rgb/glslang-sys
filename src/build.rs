@@ -493,6 +493,7 @@ fn main() {
     .header(WRAPPER_HEADER)
     .allowlist_file(".*glslang_c_shader_types.h")
     .allowlist_file(".*glslang_c_interface.h")
+    .allowlist_file(".*resource_limits_c.h")
     .parse_callbacks(Box::new(bindgen::CargoCallbacks))
     .clang_arg(format!("-I{}", glslang_include_dir.to_str().unwrap()));
 

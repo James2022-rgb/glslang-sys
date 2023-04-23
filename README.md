@@ -16,6 +16,11 @@ Motivation
 - [shaderc-rs](https://github.com/google/shaderc-rs) already exists, but it was found not to be straight-forward to build for Android.
 - [TimNN/glslang-sys](https://github.com/TimNN/glslang-sys) hasn't been maintained since 2015.
 
+glslang Version
+----------------------------
+[12.1.0](https://github.com/KhronosGroup/glslang/releases/tag/12.1.0) 
+https://github.com/KhronosGroup/glslang/commit/14e5a04e70057972eef8a40df422e30a3b70e4b5
+
 Build target support
 ----------------------------
 |                          | Windows            | Linux              |
