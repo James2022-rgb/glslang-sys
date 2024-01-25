@@ -18,16 +18,16 @@ Motivation
 
 glslang Version
 ----------------------------
-[12.1.0](https://github.com/KhronosGroup/glslang/releases/tag/12.1.0) 
-https://github.com/KhronosGroup/glslang/commit/14e5a04e70057972eef8a40df422e30a3b70e4b5
+[14.0.0](https://github.com/KhronosGroup/glslang/releases/tag/14.0.0)
+https://github.com/KhronosGroup/glslang/commit/a91631b260cba3f22858d6c6827511e636c2458a
 
 Build target support
 ----------------------------
 |                          | Windows            | Linux              |
 | ------------------------ | ------------------ | ------------------ |
-| x86_64-pc-windows-msvc   | :white_check_mark: |                    |
-| aarch64-linux-android    | :white_check_mark: |                    |
-| x86_64-unknown-linux-gnu |                    | :white_check_mark: |
+| x86_64-pc-windows-msvc   | ✅                |                    |
+| aarch64-linux-android    | ✅                |                    |
+| x86_64-unknown-linux-gnu |                    | ✅                |
 
 Remarks
 ----------------------------

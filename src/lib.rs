@@ -14,6 +14,7 @@ impl Default for glslang_spv_options_t {
       validate: false,
       emit_nonsemantic_shader_debug_info: false,
       emit_nonsemantic_shader_debug_source: false,
+      compile_only: false,
     }
   }
 }
@@ -139,25 +140,25 @@ pub unsafe fn compile(
 
   let spirv: Vec<u32> = {
     let spirv_size = glslang_program_SPIRV_get_size(program) as usize;
-    let spirv_ptr = glslang_program_SPIRV_get_ptr(program) as *mut u32;
+    let spirv_ptr: *mut u32 = glslang_program_SPIRV_get_ptr(program);
     std::slice::from_raw_parts(spirv_ptr, spirv_size).to_vec()
   };
 
   Ok(spirv)
 }
+
 pub use process::GlslangProcess;
 
 mod process {
   use std::sync::Mutex;
-  use once_cell::sync::Lazy;
   use super::{glslang_initialize_process, glslang_finalize_process};
 
-  static GLSLANG_PROCESS_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+  static GLSLANG_PROCESS_MUTEX: Mutex<()> = Mutex::new(());
 
   /// Calls [`glslang_initialize_process`] on construction, and [`glslang_finalize_process`] on [`Drop`].
+  ///
   /// ## Thread safety
-  /// Safe.
-  /// Can be constructed/dropped concurrently in the same process, making it suitable for running `cargo test` without the use of `--test-threads=1`.
+  /// Safe. Can be constructed/dropped concurrently in the same process, making it safe to run `cargo test` without the use of `--test-threads=1`.
   pub struct GlslangProcess {
     _private: (),
   }
@@ -211,6 +212,12 @@ mod tests {
       let source_c_string = CString::new(source).unwrap();
       let resource_limits: glslang_resource_t = Default::default();
 
+      let callbacks = glsl_include_callbacks_t {
+        include_system: None,
+        include_local: None,
+        free_include_result: None,
+      };
+
       let input = glslang_input_t {
         language: glslang_source_t_GLSLANG_SOURCE_GLSL,
         stage: glslang_stage_t_GLSLANG_STAGE_VERTEX,
@@ -225,6 +232,8 @@ mod tests {
         forward_compatible: 0,
         messages: glslang_messages_t_GLSLANG_MSG_DEFAULT_BIT | glslang_messages_t_GLSLANG_MSG_SPV_RULES_BIT | glslang_messages_t_GLSLANG_MSG_VULKAN_RULES_BIT,
         resource: &resource_limits,
+        callbacks,
+        callbacks_ctx: core::ptr::null_mut(),
       };
 
       let spirv = compile(&input, None, CompileOptionFlags::AddOpSource, Some("vertex_shader.vert"))?;
@@ -237,7 +246,8 @@ mod tests {
         std::slice::from_raw_parts(spirv.as_ptr() as *const u8, spirv.len() * std::mem::size_of::<u32>())
       };
 
-      std::fs::write("vertex_shader.spv", spirv_u8).unwrap();
+      std::fs::write("vertex_shader.spv", spirv_u8)
+        .unwrap();
     }
 
     Ok(())

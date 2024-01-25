@@ -361,8 +361,8 @@ mod prebuilt {
   pub enum PrebuiltError {
     #[error("Failed to locate and open prebuilt/version.txt")]
     VersionRegistryNotFound,
-    #[error("The git commit SHA in prebuilt/version.txt differs from the one defined in known_good.json")]
-    InvalidCommit,
+    #[error("The git commit SHA in prebuilt/version.txt (= {known_good}) differs from the one defined in known_good.json (= {found})")]
+    InvalidCommit { known_good: String, found: String },
   }
 
   pub fn get_prebuilt_glslang_install_dir(known_good_repo: &known_good::Repo) -> Result<PathBuf, PrebuiltError> {
@@ -398,7 +398,10 @@ mod prebuilt {
       };
 
     if known_good_repo.commit.to_lowercase() != prebuilt_commit.to_lowercase() {
-      return Err(PrebuiltError::InvalidCommit);
+      return Err(PrebuiltError::InvalidCommit {
+        known_good: known_good_repo.commit.to_lowercase(),
+        found: prebuilt_commit.to_lowercase(),
+      });
     }
 
     Ok(prebuilt_dir.join(target_dir))
@@ -407,13 +410,11 @@ mod prebuilt {
 
 fn main() {
   const WRAPPER_HEADER: &str = "src/wrapper.h";
-  const LIBS: [&str; 8] = [
+  const LIBS: [&str; 6] = [
     "GenericCodeGen",
     "glslang",
     "glslang-default-resource-limits",
-    "HLSL",
     "MachineIndependent",
-    "OGLCompiler",
     "OSDependent",
     "SPIRV",
   ];
