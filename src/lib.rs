@@ -117,7 +117,7 @@ pub unsafe fn compile(
 
   if option_flags.contains(CompileOptionFlags::AddOpSource) {
     let code_c_str = CStr::from_ptr(input.code);
-    glslang_program_add_source_text(program, input.stage, code_c_str.as_ptr(), code_c_str.to_str().unwrap().len() as size_t);
+    glslang_program_add_source_text(program, input.stage, code_c_str.as_ptr(), code_c_str.to_str().unwrap().len());
 
     if let Some(source_file_name) = source_file_name {
       let source_file_name_c_string = std::ffi::CString::new(source_file_name).unwrap();
